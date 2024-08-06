@@ -1,5 +1,6 @@
 import torch
 
+import CONFIG
 import Quaternion
 
 class Rigidbody:
@@ -13,7 +14,7 @@ class Rigidbody:
 		position_mesh = position_mesh.reshape(3, -1).T
 		
 		self.particle_positions = position_mesh.cuda()
-		self.alpha_positions = position_mesh.clone()
+		self.alpha_positions = position_mesh.clone().cuda()
 		
 		self.particle_count = self.particle_positions.shape[0]
 		self.particle_dimensionality = self.particle_positions.shape[1]
@@ -24,17 +25,26 @@ class Rigidbody:
 		self.body_velocity = 0
 		self.body_mass = torch.sum(self.particle_masses)
 		
-		weighted_positions = self.particle_positions * self.particle_masses.reshape((self.particle_count, 1))
-		self.body_origin = torch.sum(weighted_positions)
+		normalized_masses = self.particle_masses / torch.sum(self.particle_masses)
+		weighted_positions = self.particle_positions * normalized_masses.reshape((self.particle_count, 1))
 		
-		self.body_rotation = torch.FloatTensor([0, 0, 0, 1])
+		self.body_origin = torch.sum(weighted_positions, dim = 0, keepdim = True).cuda()
+		self.body_rotation = torch.FloatTensor([[0, 0, 0, 1]]).cuda()
+		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
+		self.body_angular_velocity = torch.FloatTensor([[1, 1, 0.33]]).cuda()
 		
-		self.ambient_color = torch.FloatTensor([255, 0, 0])
-		self.shiny_color = torch.FloatTensor([255, 255, 255])
-		self.shiny_val = 1
+		self.alpha_positions = self.alpha_positions - self.body_origin
 		
 	def Update(self):
+		position_delta = self.body_velocity * CONFIG.delta_time
+		self.body_origin = self.body_origin + position_delta
+		
+		rotation_angles_delta = self.body_angular_velocity * CONFIG.delta_time
+		quaternion_delta = Quaternion.QuaternionFromEulerAngles(rotation_angles_delta[0]).cuda()
+		self.body_rotation = Quaternion.MultiplyQuaternions(quaternion_delta, self.body_rotation)
+		
 		self.particle_positions = Quaternion.RotatePoints(self.alpha_positions, self.body_rotation)
+		self.particle_positions = self.particle_positions + self.body_origin
 		
 	def GetParticleData(self):
 		return self.particle_positions, self.particle_sizes

@@ -42,3 +42,17 @@ def QuaternionFromEulerParams(axis, angle):
 	]])
 	
 	return quaternion
+
+def QuaternionFromEulerAngles(angles):
+	alpha = angles[0] / 2
+	beta = angles[1] / 2
+	gamma = angles[2] / 2
+	
+	quaternion = torch.FloatTensor([[
+		(math.cos(alpha) * math.cos(beta) * math.cos(gamma)) + (math.sin(alpha) * math.sin(beta) * math.sin(gamma)),
+		(math.sin(alpha) * math.cos(beta) * math.cos(gamma)) - (math.cos(alpha) * math.sin(beta) * math.sin(gamma)),
+		(math.cos(alpha) * math.sin(beta) * math.cos(gamma)) + (math.sin(alpha) * math.cos(beta) * math.sin(gamma)),
+		(math.cos(alpha) * math.cos(beta) * math.sin(gamma)) - (math.sin(alpha) * math.sin(beta) * math.cos(gamma))
+	]])
+	
+	return quaternion

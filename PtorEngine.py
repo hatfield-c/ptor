@@ -22,9 +22,14 @@ class PtorEngine:
 		for i in range(10000000):
 			start_time = time.time()	
 			
+			self.PhysicsUpdate()
 			self.ScenarioUpdate()
 			self.RenderUpdate(start_time)
 			
+			
+	def PhysicsUpdate(self):
+		pass
+		self.rigidbody.Update()
 			
 	def ScenarioUpdate(self):
 		self.camera.RotateAroundAnchor(torch.FloatTensor([0, 0, 0]).cuda(), 0.01)
