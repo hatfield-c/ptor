@@ -1,7 +1,8 @@
 import torch
+import math
 
 def RotatePoints(points, quaternion):
-	point_quat = torch.zeros((points.shape[0], 1))
+	point_quat = torch.zeros((points.shape[0], 1)).cuda()
 	point_quat = torch.cat((point_quat, points), dim = 1)
 	
 	quaternion_conjugate = GetQuaternionConjugate(quaternion)
@@ -29,3 +30,15 @@ def GetQuaternionConjugate(quaternion):
 	conjugate = torch.stack([quaternion[:, 0], -quaternion[:, 1], -quaternion[:, 2], -quaternion[:, 3]], dim = 1)
 	
 	return conjugate
+
+def QuaternionFromEulerParams(axis, angle):
+	sin_val = math.sin(angle / 2)
+	
+	quaternion = torch.FloatTensor([[
+		math.cos(angle / 2), 
+		sin_val * axis[0],
+		sin_val * axis[1],
+		sin_val * axis[2],
+	]])
+	
+	return quaternion

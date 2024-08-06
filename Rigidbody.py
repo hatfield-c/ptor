@@ -12,14 +12,14 @@ class Rigidbody:
 		position_mesh = torch.stack(position_mesh)
 		position_mesh = position_mesh.reshape(3, -1).T
 		
-		self.particle_positions = position_mesh
+		self.particle_positions = position_mesh.cuda()
 		self.alpha_positions = position_mesh.clone()
 		
 		self.particle_count = self.particle_positions.shape[0]
 		self.particle_dimensionality = self.particle_positions.shape[1]
 		
-		self.particle_sizes = torch.zeros(self.particle_count) + 0.5
-		self.particle_masses = torch.ones(self.particle_count)
+		self.particle_sizes = torch.zeros(self.particle_count).cuda() + 0.5
+		self.particle_masses = torch.ones(self.particle_count).cuda()
 		
 		self.body_velocity = 0
 		self.body_mass = torch.sum(self.particle_masses)
