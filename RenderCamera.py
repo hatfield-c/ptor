@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import torch
+import torch
 import cv2
 import time
 
@@ -17,12 +18,10 @@ class RenderCamera:
 		self.pitch_rotation = Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
 		self.yaw_rotation = torch.FloatTensor([[-0.924, 0, 0, -0.383]]).cuda()
 		
-		self.yaw_theta = -45
-		
 		self.min_render_distance = 0.05
 		self.max_render_distance = 100
 		
-		self.camera_position = torch.FloatTensor([[2.5, -2.5, 2]]).cuda()
+		self.camera_position = torch.FloatTensor([[500, 400, 35]]).cuda()
 		
 		lateral_displacement = torch.sin(self.render_fov[1] / 2)
 		vertical_displacement = torch.sin(self.render_fov[0] / 2)
@@ -42,60 +41,50 @@ class RenderCamera:
 		self.ray_origins = ray_origins.cuda() * self.min_render_distance
 		self.ray_endgins = ray_origins.cuda() * self.max_render_distance
 		
-	def CaptureImage(self, rigidbody):
-		canvas = torch.zeros(self.resolution)
+		self.ray_steps = 100
+		self.ray_delta = torch.linspace(0, 1, self.ray_steps).reshape(1, -1, 1).cuda()
 		
+		self.mat_library = torch.FloatTensor([[0, 0, 0], [180, 180, 180], [250, 220, 0]]).cuda()
+		self.static_query_indices = torch.arange(self.ray_origins.shape[0]).cuda()
+	
+	def CaptureImage(self, world_space, rigidbody):
+		render_space = world_space.GetRenderSpace(rigidbody)
 		ray_origins, ray_endgins = self.UpdateRayPoints()
 		
-		particles, particle_sizes = rigidbody.GetParticleData()
+		ray_directions = ray_endgins - ray_origins
+		ray_directions = torch.nn.functional.normalize(ray_directions, p = 2, dim = 1)
+		ray_directions = torch.abs(ray_directions)
 		
-		ray_vectors = ray_endgins - ray_origins
-		ray_vectors = ray_vectors / torch.norm(ray_vectors, dim = 1, keepdim = True)
+		position_queries = ((1 - self.ray_delta) * ray_origins.unsqueeze(1)) + (self.ray_delta* ray_endgins.unsqueeze(1))
+		position_queries = position_queries.view(-1, 3)
+		position_queries = torch.clamp(position_queries, torch.zeros((1, 3)).cuda(), torch.FloatTensor(list(world_space.space.shape)).view(1, -1).cuda() - 1)
+		index_queries = position_queries.int()
 		
-		ray_origins = ray_origins.unsqueeze(2)
-		ray_vectors = ray_vectors.unsqueeze(2)
-		particles = particles.unsqueeze(2)
-		particle_sizes = particle_sizes.unsqueeze(0)
+		#query_vals = world_space.space[index_queries[:, 0], index_queries[:, 1], index_queries[:, 2]]
+		query_vals = render_space[index_queries[:, 0], index_queries[:, 1], index_queries[:, 2]]
+		query_vals = query_vals.view(ray_origins.shape[0], self.ray_steps)
 		
-		particles = particles.repeat((1, 1, ray_origins.shape[0]))
-		particles = particles.transpose(0, 2)
+		is_occupied = (query_vals > 0)
+		_, nearest_occupied_indices = torch.max((is_occupied.cumsum(1) == 1) & is_occupied, dim = 1)
 		
-		particle_vectors = particles - ray_origins
-		particle_distances = particle_vectors * ray_vectors
-		particle_distances = torch.sum(particle_distances, dim = 1, keepdim = True)
+		render_ids = query_vals[self.static_query_indices, nearest_occupied_indices].int()
+		canvas = self.mat_library[render_ids]
 		
-		particle_projections = particle_distances * ray_vectors
-		particle_projections = particle_projections + ray_origins
-		start_time = time.time()
-		#print("1:", time.time() - start_time)
+		shading = (0.1 * (nearest_occupied_indices + 0.001))
+		shading = shading ** -1
 		
-		ray_offsets = particle_projections - particles
-		ray_offsets = torch.norm(ray_offsets, dim = 1)
-		#print("2:", time.time() - start_time)
-		shading_val = particle_sizes - ray_offsets
-		shading_val = torch.clamp_min(shading_val, 0) / particle_sizes
-		#print("3:", time.time() - start_time)
-		hitmask = torch.ceil(shading_val)
-		invert_hitmask = (1 - hitmask) * 1e10
-		shading_val = shading_val ** 0.5
-		#print("4:", time.time() - start_time)
-		max_values, max_indices = torch.max(shading_val, dim = 1)
+		shading = shading.view(-1, 1)
 		
-		particle_distances = particle_distances[:, 0]
-		closest_hits = invert_hitmask + particle_distances
+		canvas = canvas * shading
 		
-		closest_values, closest_indices = torch.min(closest_hits, dim = 1)
-		
-		canvas = shading_val[torch.arange(shading_val.shape[0]), closest_indices]
-		canvas = canvas.reshape(self.resolution)
+		canvas = canvas.view((self.render_height, self.render_width, 3))
 		canvas = canvas.flip(dims = (0,))
-		#print("5:", time.time() - start_time)
-		#print("")
+		
 		return canvas
 	
 	def UpdateRayPoints(self):
-		yaw_rotation = Quaternion.QuaternionFromEulerParams([0, 0, 1], self.yaw_theta).cuda()
-		
+		#print(self.ray_origins.shape)
+		#exit()
 		ray_origins = Quaternion.RotatePoints(self.ray_origins, self.pitch_rotation)
 		ray_origins = Quaternion.RotatePoints(ray_origins, self.yaw_rotation)
 		ray_origins += self.camera_position
