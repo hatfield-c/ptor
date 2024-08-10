@@ -5,6 +5,8 @@ import Quaternion
 
 class Rigidbody:
 	def __init__(self):
+		self.material_val = 5
+		
 		x = torch.linspace(0, 1, 20)
 		y = torch.linspace(0, 1, 20)
 		z = torch.linspace(0, 1, 20)

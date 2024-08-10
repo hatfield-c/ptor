@@ -35,7 +35,7 @@ class PtorEngine:
 		self.rigidbody.Update()
 			
 	def ScenarioUpdate(self):
-		self.camera.RotateAroundAnchor(torch.FloatTensor([460, 460, 10]).cuda(), -0.01 * 0)
+		self.camera.RotateAroundAnchor(torch.FloatTensor([460, 460, 10]).cuda(), -0.01)
 		
 	def RenderUpdate(self, start_time):
 		render_frame = self.camera.CaptureImage(self.world_space, self.rigidbody)

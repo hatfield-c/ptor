@@ -14,12 +14,11 @@ class RenderCamera:
 		self.resolution = (self.render_height, self.render_width)
 		self.render_fov = torch.FloatTensor([math.pi / 2, math.pi / 2])
 		
-		#self.pitch_rotation = torch.FloatTensor([[0.924, -0.383, 0, 0]]).cuda()
 		self.pitch_rotation = Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
 		self.yaw_rotation = torch.FloatTensor([[-0.924, 0, 0, -0.383]]).cuda()
 		
 		self.min_render_distance = 0.05
-		self.max_render_distance = 100
+		self.max_render_distance = 200
 		
 		self.camera_position = torch.FloatTensor([[500, 400, 35]]).cuda()
 		
@@ -41,11 +40,20 @@ class RenderCamera:
 		self.ray_origins = ray_origins.cuda() * self.min_render_distance
 		self.ray_endgins = ray_origins.cuda() * self.max_render_distance
 		
-		self.ray_steps = 100
+		self.ray_steps = 200
 		self.ray_delta = torch.linspace(0, 1, self.ray_steps).reshape(1, -1, 1).cuda()
 		
-		self.mat_library = torch.FloatTensor([[0, 0, 0], [180, 180, 180], [250, 220, 0]]).cuda()
 		self.static_query_indices = torch.arange(self.ray_origins.shape[0]).cuda()
+		self.mat_library = torch.FloatTensor([
+			[0, 0, 0], 
+			[180, 180, 180], 
+			[255, 0, 0],
+			[0, 255, 0],
+			[0, 0, 255],
+			[255, 255, 0],
+			[255, 0, 255],
+			[0, 255, 255]
+		]).cuda()
 	
 	def CaptureImage(self, world_space, rigidbody):
 		render_space = world_space.GetRenderSpace(rigidbody)
@@ -70,8 +78,10 @@ class RenderCamera:
 		render_ids = query_vals[self.static_query_indices, nearest_occupied_indices].int()
 		canvas = self.mat_library[render_ids]
 		
-		shading = (0.1 * (nearest_occupied_indices + 0.001))
-		shading = shading ** -1
+		#shading = (0.03 * (nearest_occupied_indices + 30))
+		#shading = shading ** -1
+		#shading = torch.clamp(shading, 0, 1)
+		shading = torch.exp(-0.02 * nearest_occupied_indices)
 		
 		shading = shading.view(-1, 1)
 		
