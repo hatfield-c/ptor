@@ -18,7 +18,7 @@ class RenderCamera:
 		self.yaw_rotation = torch.FloatTensor([[-0.924, 0, 0, -0.383]]).cuda()
 		
 		self.min_render_distance = 0.05
-		self.max_render_distance = 200
+		self.max_render_distance = 500
 		
 		self.camera_position = torch.FloatTensor([[500, 400, 35]]).cuda()
 		
@@ -40,7 +40,7 @@ class RenderCamera:
 		self.ray_origins = ray_origins.cuda() * self.min_render_distance
 		self.ray_endgins = ray_origins.cuda() * self.max_render_distance
 		
-		self.ray_steps = 200
+		self.ray_steps = 500
 		self.ray_delta = torch.linspace(0, 1, self.ray_steps).reshape(1, -1, 1).cuda()
 		
 		self.static_query_indices = torch.arange(self.ray_origins.shape[0]).cuda()
@@ -78,10 +78,7 @@ class RenderCamera:
 		render_ids = query_vals[self.static_query_indices, nearest_occupied_indices].int()
 		canvas = self.mat_library[render_ids]
 		
-		#shading = (0.03 * (nearest_occupied_indices + 30))
-		#shading = shading ** -1
-		#shading = torch.clamp(shading, 0, 1)
-		shading = torch.exp(-0.02 * nearest_occupied_indices)
+		shading = torch.exp(-0.007 * nearest_occupied_indices)
 		
 		shading = shading.view(-1, 1)
 		

@@ -7,5 +7,7 @@ possible_actions = {
 
 delta_time = 1 / 30
 
-static_mesh_path = "data/obj_meshes/test.obj"
-static_particles_path = "data/pt_particles/test.pt"
+static_mesh_path = "data/obj_meshes/sample_world.glb"
+rigid_mesh_path = "data/obj_meshes/drone.glb"
+static_particles_path = "data/pt_particles/sample_world.pt"
+rigid_particles_path = "data/pt_particles/drone.pt"
