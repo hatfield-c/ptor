@@ -28,24 +28,37 @@ def Main():
 	if action not in actions:
 		action = actions["help"]
 
-	if action == actions["playground"]:
+	if action == actions["simulate"]:
 		import PtorEngine
 		
 		engine = PtorEngine.PtorEngine()
 		engine.InstantiateScenario()
 		engine.Run()
 
-	if action == actions["convert_static_mesh"]:
+	if action == actions["convert_static_env_mesh"]:
 		import MeshConverter
 		
-		mesh_converter = MeshConverter.MeshConverter(CONFIG.static_mesh_path)
-		mesh_converter.SaveAsVoxelParticles(CONFIG.static_particles_path, 0.1, 0)
+		mesh_converter = MeshConverter.MeshConverter(CONFIG.static_env_mesh_path)
+		mesh_converter.SaveAsVoxelParticles(
+			save_path = CONFIG.static_env_particles_path, 
+			voxel_size = 0.1
+		)
 		
-	if action == actions["convert_rigid_mesh"]:
+	if action == actions["convert_rigid_drone_mesh"]:
 		import MeshConverter
 		
-		mesh_converter = MeshConverter.MeshConverter(CONFIG.rigid_mesh_path)
-		mesh_converter.SaveAsObjectParticles(CONFIG.rigid_particles_path)
+		mesh_converter = MeshConverter.MeshConverter(CONFIG.rigid_drone_mesh_path)
+		mesh_converter.SaveAsVoxelParticles(
+			save_path = CONFIG.rigid_drone_particles_path, 
+			voxel_size = 0.005,
+			expected_mass = 2.806
+		)
+		
+	if action == actions["convert_visual_drone_mesh"]:
+		import MeshConverter
+		
+		mesh_converter = MeshConverter.MeshConverter(CONFIG.visual_drone_mesh_path)
+		mesh_converter.SaveAsObjectParticles(save_path = CONFIG.visual_drone_particles_path)
 		
 	if action == "help":
 		print("	[PTOR] Particle PyTorch Simulation")

@@ -1,13 +1,18 @@
 possible_actions = {
 	"help": "help", 
-	"convert_static_mesh": "convert_static_mesh",
-	"convert_rigid_mesh": "convert_rigid_mesh",
-	"playground": "playground"
+	"convert_static_env_mesh": "convert_static_env_mesh",
+	"convert_rigid_drone_mesh": "convert_rigid_drone_mesh",
+	"convert_visual_drone_mesh": "convert_visual_drone_mesh",
+	"simulate": "simulate"
 }
 
 delta_time = 1 / 30
 
-static_mesh_path = "data/obj_meshes/sample_world.glb"
-rigid_mesh_path = "data/obj_meshes/drone.glb"
-static_particles_path = "data/pt_particles/sample_world.pt"
-rigid_particles_path = "data/pt_particles/drone.pt"
+static_env_mesh_path = "data/glb_meshes/sample_world.glb"
+static_env_particles_path = "data/pt_particles/sample_world.pt"
+
+rigid_drone_mesh_path = "data/glb_meshes/drone.glb"
+rigid_drone_particles_path = "data/pt_particles/drone.pt"
+
+visual_drone_mesh_path = "data/glb_meshes/drone_visual.glb"
+visual_drone_particles_path = "data/pt_particles/drone_visual.pt"

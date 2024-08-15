@@ -20,7 +20,7 @@ class RenderCamera:
 		self.min_render_distance = 0.05
 		self.max_render_distance = 500
 		
-		self.camera_position = torch.FloatTensor([[500, 400, 35]]).cuda()
+		self.camera_position = torch.FloatTensor([[463, 457, 25]]).cuda()
 		
 		lateral_displacement = torch.sin(self.render_fov[1] / 2)
 		vertical_displacement = torch.sin(self.render_fov[0] / 2)
@@ -45,14 +45,17 @@ class RenderCamera:
 		
 		self.static_query_indices = torch.arange(self.ray_origins.shape[0]).cuda()
 		self.mat_library = torch.FloatTensor([
-			[0, 0, 0], 
-			[180, 180, 180], 
+			[0, 0, 0],
+			[180, 180, 180],
 			[255, 0, 0],
 			[0, 255, 0],
 			[0, 0, 255],
 			[255, 255, 0],
 			[255, 0, 255],
-			[0, 255, 255]
+			[0, 255, 255],
+			[100, 100, 100],
+			[140, 140, 140],
+			[0, 45, 0],
 		]).cuda()
 	
 	def CaptureImage(self, world_space, rigidbody):

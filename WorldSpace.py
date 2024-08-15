@@ -15,7 +15,7 @@ class WorldSpace:
 		self.LoadWorldVoxels()
 		
 	def LoadWorldVoxels(self):
-		particle_data = torch.load(CONFIG.static_particles_path).cuda()
+		particle_data = torch.load(CONFIG.static_env_particles_path).cuda()
 		particle_positions = particle_data[:, :3]
 		material_vals = particle_data[:, 3]
 		
@@ -44,7 +44,7 @@ class WorldSpace:
 		particle_indices = particle_indices.int()
 		
 		render_space = self.space.clone()
-		render_space[particle_indices[:, 0], particle_indices[:, 1], particle_indices[:, 2]] = rigidbody.material_val
+		render_space[particle_indices[:, 0], particle_indices[:, 1], particle_indices[:, 2]] = rigidbody.material_vals
 		
 		return render_space
 		

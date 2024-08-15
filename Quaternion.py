@@ -56,3 +56,26 @@ def QuaternionFromEulerAngles(angles):
 	]])
 	
 	return quaternion
+
+def MatrixFromQuaternion(q):
+	r0 = torch.cat((
+		1 - (2 * (q[:, 2] ** 2)) - (2 * (q[:, 3] ** 2)),
+		(2 * q[:, 1] * q[:, 2]) - (2 * q[:, 0] * q[:, 3]),
+		(2 * q[:, 1] * q[:, 3]) + (2 * q[:, 0] * q[:, 2])
+	))
+	
+	r1 = torch.cat((
+		(2 * q[:, 1] * q[:, 2]) + (2 * q[:, 0] * q[:, 3]),
+		1 - (2 * (q[:, 1] ** 2)) - (2 * (q[:, 3] ** 2)),
+		(2 * q[:, 2] * q[:, 3]) - (2 * q[:, 0] * q[:, 1])
+	))
+	
+	r2 = torch.cat((
+		(2 * q[:, 1] * q[:, 3]) - (2 * q[:, 0] * q[:, 2]),
+		(2 * q[:, 2] * q[:, 3]) + (2 * q[:, 0] * q[:, 1]),
+		1 - (2 * (q[:, 1] ** 2)) - (2 * (q[:, 2] ** 2))
+	))
+	
+	rotation_matrix = torch.stack((r0, r1, r2))
+	
+	return rotation_matrix
