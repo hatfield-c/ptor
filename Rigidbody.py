@@ -22,11 +22,9 @@ class Rigidbody:
 		self.particle_sizes = torch.ones(self.particle_count).cuda()
 		self.particle_masses = torch.ones(self.particle_count).cuda()
 		
-		self.body_velocity = 0
-		self.body_mass = torch.sum(self.particle_masses)
-		
 		self.center_of_mass = physics_vals["center_of_mass"]
-		self.inertia_moment = physics_vals["inertia_moment"]
+		self.inertia_moment = physics_vals["inertia_moment"].cuda()
+		self.body_mass = physics_vals["total_mass"]
 		
 		self.alpha_positions = self.alpha_positions - self.center_of_mass
 		
@@ -34,7 +32,8 @@ class Rigidbody:
 		self.body_origin = self.center_of_mass + world_origin
 		self.body_rotation = torch.FloatTensor([[0, 0, 0, 1]]).cuda()
 		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
-		self.body_angular_velocity = torch.FloatTensor([[1, 1, 0.33]]).cuda()
+		self.body_angular_velocity = torch.FloatTensor([[1, 1, 0.33]]).cuda() * 0
+		self.inverse_inertia = self.InverseIntertia()
 		
 	def Update(self):
 		position_delta = self.body_velocity * CONFIG.delta_time
@@ -46,6 +45,29 @@ class Rigidbody:
 		
 		self.particle_positions = Quaternion.RotatePoints(self.alpha_positions, self.body_rotation)
 		self.particle_positions = self.particle_positions + self.body_origin
+		
+	def AddForce(self, force, displacement = None, massless = False):
+		if displacement is not None:
+			angular_momentum_delta = torch.linalg.cross(displacement, force).view(-1, 1)
+			angular_velocity_delta = torch.matmul(self.inverse_inertia, angular_momentum_delta)
+		
+			self.body_angular_velocity += angular_velocity_delta
+		
+		acceleration = force
+		if not massless:
+			acceleration = force / self.body_mass	
+		
+		acceleration = acceleration.view(1, -1)
+		
+		self.body_velocity += acceleration
+		
+	def InverseIntertia(self):
+		rotation_matrix = Quaternion.MatrixFromQuaternion(self.body_rotation)
+		
+		inverse_inertia = torch.linalg.solve(self.inertia_moment, rotation_matrix.T)
+		inverse_inertia = torch.matmul(rotation_matrix, inverse_inertia)
+		
+		return inverse_inertia
 		
 	def LoadPhysicsValues(self):
 		print("Loading physics values...")
@@ -83,7 +105,8 @@ class Rigidbody:
 			
 		physics_values = {
 			"center_of_mass": center_of_mass,
-			"inertia_moment": inertia_moment
+			"inertia_moment": inertia_moment,
+			"total_mass": torch.sum(mass)
 		}
 			
 		print("    Loaded!")

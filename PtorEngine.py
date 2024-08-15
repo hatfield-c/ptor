@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import time
 
+import CONFIG
 import Rigidbody
 import WorldSpace
 import RenderCamera
@@ -15,7 +16,10 @@ class PtorEngine:
 		self.world_space = WorldSpace.WorldSpace()
 		
 		self.avg_fps = 1
-		self.delta_time = 1 / 30
+		self.delta_time = CONFIG.delta_time
+		
+		self.gravity = torch.FloatTensor([[0, 0, -9.8]]).cuda()
+		self.gravity_delta = self.gravity * self.delta_time
 	
 	def InstantiateScenario(self):
 		pass
@@ -30,6 +34,7 @@ class PtorEngine:
 			self.RenderUpdate(start_time)
 			
 	def PhysicsUpdate(self):
+		self.rigidbody.AddForce(self.gravity_delta, massless = True)
 		self.rigidbody.Update()
 			
 	def ScenarioUpdate(self):
