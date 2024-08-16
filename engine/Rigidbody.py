@@ -2,7 +2,7 @@ import torch
 import math
 
 import CONFIG
-import Quaternion
+import engine.Quaternion as Quaternion
 
 class Rigidbody:
 	def __init__(self):

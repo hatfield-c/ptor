@@ -29,7 +29,7 @@ def Main():
 		action = actions["help"]
 
 	if action == actions["simulate"]:
-		import PtorEngine
+		import engine.PtorEngine as PtorEngine
 		
 		engine = PtorEngine.PtorEngine()
 		engine.InstantiateScenario()
@@ -45,7 +45,7 @@ def Main():
 		)
 		
 	if action == actions["convert_rigid_drone_mesh"]:
-		import MeshConverter
+		import engine.MeshConverter as MeshConverter
 		
 		mesh_converter = MeshConverter.MeshConverter(CONFIG.rigid_drone_mesh_path)
 		mesh_converter.SaveAsVoxelParticles(
@@ -55,7 +55,7 @@ def Main():
 		)
 		
 	if action == actions["convert_visual_drone_mesh"]:
-		import MeshConverter
+		import engine.MeshConverter as MeshConverter
 		
 		mesh_converter = MeshConverter.MeshConverter(CONFIG.visual_drone_mesh_path)
 		mesh_converter.SaveAsObjectParticles(save_path = CONFIG.visual_drone_particles_path)

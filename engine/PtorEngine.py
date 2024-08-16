@@ -4,15 +4,15 @@ import torch
 import time
 
 import CONFIG
-import Rigidbody
-import WorldSpace
-import RenderCamera
-import Quaternion
+import engine.WorldSpace as WorldSpace
+import render.RenderCamera as RenderCamera
+import entity.DroneTau as DroneTau
+import engine.Quaternion as Quaternion
 
 class PtorEngine:
 	def __init__(self):
 		self.camera = RenderCamera.RenderCamera()
-		self.rigidbody = Rigidbody.Rigidbody()
+		self.drone = DroneTau.DroneTau()
 		self.world_space = WorldSpace.WorldSpace()
 		
 		self.avg_fps = 1
@@ -31,33 +31,25 @@ class PtorEngine:
 		for i in range(10000000):
 			start_time = time.time()	
 			
-			self.PhysicsUpdate()
 			self.ScenarioUpdate()
+			self.PhysicsUpdate()
 			self.RenderUpdate(start_time)
 			
 			self.time_step = i
 			
 	def PhysicsUpdate(self):
-		self.rigidbody.Accelerate(self.gravity_delta)
-
-		for i in range(4):
-			thrust = torch.FloatTensor([[0, 0, 0.28]]).cuda()
-			motor_position = self.rigidbody.motor_positions[[i]]
-			
-			thrust = Quaternion.RotatePoints(thrust, self.rigidbody.body_rotation)
-			motor_position = Quaternion.RotatePoints(motor_position, self.rigidbody.body_rotation)
-			
-			self.rigidbody.AddForce(thrust, motor_position)
+		rigidbody = self.drone.rigidbody
 		
-		self.rigidbody.Update()
+		rigidbody.Accelerate(self.gravity_delta)
+		rigidbody.Update()
 			
 	def ScenarioUpdate(self):
-		self.camera.RotateAroundAnchor(torch.FloatTensor([460, 460, 10]).cuda(), -0.01 * 0)
+		self.drone.Update()
 		
 	def RenderUpdate(self, start_time):
-		self.camera.Follow(self.rigidbody)
+		self.camera.Follow(self.drone.rigidbody)
 		
-		render_frame = self.camera.CaptureImage(self.world_space, self.rigidbody)
+		render_frame = self.camera.CaptureImage(self.world_space, self.drone.rigidbody)
 		render_frame = render_frame.cpu().numpy().astype(np.uint8)
 		
 		render_frame = cv2.resize(render_frame, (1024, 1024), interpolation = cv2.INTER_NEAREST)

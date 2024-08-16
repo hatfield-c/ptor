@@ -1,7 +1,7 @@
 import torch
 
 import CONFIG
-import Quaternion
+import engine.Quaternion as Quaternion
 
 class WorldSpace:
 	def __init__(self):

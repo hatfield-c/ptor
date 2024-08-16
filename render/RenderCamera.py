@@ -6,7 +6,7 @@ import cv2
 import time
 
 import CONFIG
-import Quaternion
+import engine.Quaternion as Quaternion
 
 class RenderCamera:
 	def __init__(self):
@@ -19,10 +19,10 @@ class RenderCamera:
 		self.yaw_rotation = Quaternion.QuaternionFromEulerParams([0, 0, 1], 0).cuda()
 		
 		self.min_render_distance = 0.05
-		self.max_render_distance = 500
+		self.max_render_distance = 350
 		
 		self.camera_position = torch.FloatTensor([[460, 450, 27]]).cuda()
-		self.camera_offset = torch.FloatTensor([[0, -10, 7]]).cuda()
+		self.camera_offset = torch.FloatTensor([[0, -15, 7]]).cuda()
 		
 		lateral_displacement = torch.sin(self.render_fov[1] / 2)
 		vertical_displacement = torch.sin(self.render_fov[0] / 2)
@@ -42,7 +42,7 @@ class RenderCamera:
 		self.ray_origins = ray_origins.cuda() * self.min_render_distance
 		self.ray_endgins = ray_origins.cuda() * self.max_render_distance
 		
-		self.ray_steps = 500
+		self.ray_steps = 750
 		self.ray_delta = torch.linspace(0, 1, self.ray_steps).reshape(1, -1, 1).cuda()
 		
 		self.static_query_indices = torch.arange(self.ray_origins.shape[0]).cuda()
@@ -90,7 +90,6 @@ class RenderCamera:
 		position_queries = torch.clamp(position_queries, torch.zeros((1, 3)).cuda(), torch.FloatTensor(list(world_space.space.shape)).view(1, -1).cuda() - 1)
 		index_queries = position_queries.int()
 		
-		#query_vals = world_space.space[index_queries[:, 0], index_queries[:, 1], index_queries[:, 2]]
 		query_vals = render_space[index_queries[:, 0], index_queries[:, 1], index_queries[:, 2]]
 		query_vals = query_vals.view(ray_origins.shape[0], self.ray_steps)
 		
@@ -100,7 +99,7 @@ class RenderCamera:
 		render_ids = query_vals[self.static_query_indices, nearest_occupied_indices].int()
 		canvas = self.mat_library[render_ids]
 		
-		shading = torch.exp(-0.007 * nearest_occupied_indices)
+		shading = torch.exp(-0.004 * nearest_occupied_indices)
 		
 		shading = shading.view(-1, 1)
 		
