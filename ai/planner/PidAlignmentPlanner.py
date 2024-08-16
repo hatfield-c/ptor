@@ -11,9 +11,9 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 
 	def __init__(self):
 		self.align_pid = Pid.Pid(
-			p_scale = 1,
+			p_scale = 0.5,
 			i_scale = 0,
-			d_scale = 0.6,
+			d_scale = 1,
 		)
 
 	def GetPlan(self, current_state):

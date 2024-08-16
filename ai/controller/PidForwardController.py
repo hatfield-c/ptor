@@ -14,11 +14,11 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		self.xy_corner_2 = torch.FloatTensor([[-1, -1, 0]]).cuda()
 
 		self.speed_val = 1
-		self.move_angle = math.pi / 6
+		self.move_angle = math.pi / 8
 		self.move_depth = -math.sin(self.move_angle)
 
 		self.thrust_pid = Pid.Pid(
-			p_scale = 0.5,
+			p_scale = 0.05,
 			i_scale = 0,
 			d_scale = 0.5,
 			#debug = True
@@ -84,7 +84,7 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		roll_error = dist_2_xy - dist_1_xy
 		yaw_error = local_corner_2[0, 2] - local_corner_1[0, 2]
 
-		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2]) * 0
+		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2])
 		pitch_rpm = self.pitch_pid.ControlStep(pitch_error)
 		roll_rpm = self.roll_pid.ControlStep(roll_error)
 		yaw_rpm = self.yaw_pid.ControlStep(yaw_error)

@@ -40,7 +40,7 @@ class PtorEngine:
 	def PhysicsUpdate(self):
 		rigidbody = self.drone.rigidbody
 		
-		#rigidbody.Accelerate(self.gravity_delta)
+		rigidbody.Accelerate(self.gravity_delta)
 		rigidbody.Update()
 			
 	def ScenarioUpdate(self):

@@ -29,7 +29,7 @@ class Rigidbody:
 		
 		self.alpha_positions = self.alpha_positions - self.center_of_mass
 		
-		world_origin = torch.FloatTensor([[30, 20, 2]]).cuda() 
+		world_origin = torch.FloatTensor([[45, 20, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
 		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, math.pi / 6, 0]).cuda()#Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
 		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
@@ -58,12 +58,11 @@ class Rigidbody:
 		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)
 	
 		self.body_angular_velocity += angular_velocity_delta.T
-		#print(self.body_angular_velocity)
 		
 		acceleration = force / self.body_mass	
 		acceleration = acceleration.view(1, -1)
 		
-		#self.body_velocity += acceleration
+		self.body_velocity += acceleration
 	
 	def AddTorque(self, torque):
 		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)

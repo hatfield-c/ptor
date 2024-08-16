@@ -28,6 +28,7 @@ class WorldSpace:
 
 		self.space[world_indices[:, 0], world_indices[:, 1], world_indices[:, 2]] = material_vals
 		
+		self.space[500, :, 20] = 6
 		self.space[320, 200, 20] = 6
 		
 	def BuildCubicMeters(self, start, end, value):
