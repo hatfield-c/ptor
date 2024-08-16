@@ -20,6 +20,8 @@ class PtorEngine:
 		
 		self.gravity = torch.FloatTensor([[0, 0, -9.8]]).cuda()
 		self.gravity_delta = self.gravity * self.delta_time
+		
+		self.time_step = 0
 	
 	def InstantiateScenario(self):
 		pass
@@ -33,14 +35,28 @@ class PtorEngine:
 			self.ScenarioUpdate()
 			self.RenderUpdate(start_time)
 			
+			self.time_step = i
+			
 	def PhysicsUpdate(self):
-		self.rigidbody.AddForce(self.gravity_delta, massless = True)
+		self.rigidbody.Accelerate(self.gravity_delta)
+
+		for i in range(4):
+			thrust = torch.FloatTensor([[0, 0, 0.28]]).cuda()
+			motor_position = self.rigidbody.motor_positions[[i]]
+			
+			thrust = Quaternion.RotatePoints(thrust, self.rigidbody.body_rotation)
+			motor_position = Quaternion.RotatePoints(motor_position, self.rigidbody.body_rotation)
+			
+			self.rigidbody.AddForce(thrust, motor_position)
+		
 		self.rigidbody.Update()
 			
 	def ScenarioUpdate(self):
 		self.camera.RotateAroundAnchor(torch.FloatTensor([460, 460, 10]).cuda(), -0.01 * 0)
 		
 	def RenderUpdate(self, start_time):
+		self.camera.Follow(self.rigidbody)
+		
 		render_frame = self.camera.CaptureImage(self.world_space, self.rigidbody)
 		render_frame = render_frame.cpu().numpy().astype(np.uint8)
 		

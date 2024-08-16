@@ -5,6 +5,7 @@ import torch
 import cv2
 import time
 
+import CONFIG
 import Quaternion
 
 class RenderCamera:
@@ -15,12 +16,13 @@ class RenderCamera:
 		self.render_fov = torch.FloatTensor([math.pi / 2, math.pi / 2])
 		
 		self.pitch_rotation = Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
-		self.yaw_rotation = torch.FloatTensor([[-0.924, 0, 0, -0.383]]).cuda()
+		self.yaw_rotation = Quaternion.QuaternionFromEulerParams([0, 0, 1], 0).cuda()
 		
 		self.min_render_distance = 0.05
 		self.max_render_distance = 500
 		
-		self.camera_position = torch.FloatTensor([[463, 457, 25]]).cuda()
+		self.camera_position = torch.FloatTensor([[460, 450, 27]]).cuda()
+		self.camera_offset = torch.FloatTensor([[0, -10, 7]]).cuda()
 		
 		lateral_displacement = torch.sin(self.render_fov[1] / 2)
 		vertical_displacement = torch.sin(self.render_fov[0] / 2)
@@ -58,13 +60,30 @@ class RenderCamera:
 			[0, 45, 0],
 		]).cuda()
 	
+	def Follow(self, rigidbody):
+		target_position = rigidbody.body_origin.reshape(1, -1) * CONFIG.indices_per_meter
+		target_rotation = rigidbody.body_rotation.clone()
+		
+		yaw_rotation = target_rotation.clone()
+		yaw_rotation[0, [1]] = 0
+		yaw_rotation[0, [2]] = 0
+		yaw_norm = torch.linalg.norm(yaw_rotation)
+		
+		if yaw_norm > 0:
+			yaw_rotation = yaw_rotation / yaw_norm
+		
+		camera_offset = Quaternion.RotatePoints(self.camera_offset, yaw_rotation)
+		
+		self.camera_position = target_position + camera_offset
+		
+		target_rotation[0, [1]] = 0
+		target_rotation[0, [2]] = 0
+		target_rotation = target_rotation / torch.linalg.norm(target_rotation)
+		self.yaw_rotation = target_rotation
+	
 	def CaptureImage(self, world_space, rigidbody):
 		render_space = world_space.GetRenderSpace(rigidbody)
 		ray_origins, ray_endgins = self.UpdateRayPoints()
-		
-		ray_directions = ray_endgins - ray_origins
-		ray_directions = torch.nn.functional.normalize(ray_directions, p = 2, dim = 1)
-		ray_directions = torch.abs(ray_directions)
 		
 		position_queries = ((1 - self.ray_delta) * ray_origins.unsqueeze(1)) + (self.ray_delta* ray_endgins.unsqueeze(1))
 		position_queries = position_queries.view(-1, 3)
@@ -93,8 +112,7 @@ class RenderCamera:
 		return canvas
 	
 	def UpdateRayPoints(self):
-		#print(self.ray_origins.shape)
-		#exit()
+
 		ray_origins = Quaternion.RotatePoints(self.ray_origins, self.pitch_rotation)
 		ray_origins = Quaternion.RotatePoints(ray_origins, self.yaw_rotation)
 		ray_origins += self.camera_position
@@ -102,7 +120,7 @@ class RenderCamera:
 		ray_endgins = Quaternion.RotatePoints(self.ray_endgins, self.pitch_rotation)
 		ray_endgins = Quaternion.RotatePoints(ray_endgins, self.yaw_rotation)
 		ray_endgins += self.camera_position
-		
+
 		return ray_origins, ray_endgins
 	
 	def RotateAroundAnchor(self, anchor, theta):

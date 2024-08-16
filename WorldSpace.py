@@ -10,7 +10,7 @@ class WorldSpace:
 		# array_size: 1000 x 1000 x 300
 		self.space = torch.zeros(1000, 1000, 300).cuda()
 		
-		self.indices_per_meter = 10
+		self.indices_per_meter = CONFIG.indices_per_meter
 		
 		self.LoadWorldVoxels()
 		
@@ -42,7 +42,7 @@ class WorldSpace:
 
 		particle_indices = (particle_positions * self.indices_per_meter)
 		particle_indices = particle_indices.int()
-		
+
 		render_space = self.space.clone()
 		render_space[particle_indices[:, 0], particle_indices[:, 1], particle_indices[:, 2]] = rigidbody.material_vals
 		

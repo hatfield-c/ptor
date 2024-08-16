@@ -9,6 +9,7 @@ possible_actions = {
 }
 
 delta_time = 1 / 30
+indices_per_meter = 10
 
 static_env_mesh_path = "data/glb_meshes/sample_world.glb"
 static_env_particles_path = "data/pt_particles/sample_world.pt"
