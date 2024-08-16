@@ -40,7 +40,7 @@ class PtorEngine:
 	def PhysicsUpdate(self):
 		rigidbody = self.drone.rigidbody
 		
-		rigidbody.Accelerate(self.gravity_delta)
+		#rigidbody.Accelerate(self.gravity_delta)
 		rigidbody.Update()
 			
 	def ScenarioUpdate(self):
@@ -49,7 +49,7 @@ class PtorEngine:
 	def RenderUpdate(self, start_time):
 		self.camera.Follow(self.drone.rigidbody)
 		
-		render_frame = self.camera.CaptureImage(self.world_space, self.drone.rigidbody)
+		render_frame = self.camera.CaptureImage(self.world_space, self.drone)
 		render_frame = render_frame.cpu().numpy().astype(np.uint8)
 		
 		render_frame = cv2.resize(render_frame, (1024, 1024), interpolation = cv2.INTER_NEAREST)

@@ -29,19 +29,13 @@ class Rigidbody:
 		
 		self.alpha_positions = self.alpha_positions - self.center_of_mass
 		
-		world_origin = torch.FloatTensor([[46, 20, 2]]).cuda() 
+		world_origin = torch.FloatTensor([[30, 20, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
-		self.body_rotation = Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
+		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, math.pi / 6, 0]).cuda()#Quaternion.QuaternionFromEulerParams([1, 0, 0], -math.pi / 6).cuda()
+		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
 		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
 		self.body_angular_velocity = torch.FloatTensor([[0, 0, 0]]).cuda() * 1
-		self.inverse_inertia = self.InverseIntertia()
-		
-		self.motor_positions = torch.FloatTensor([
-			[-0.144216, 0.107853, 0.03868],
-			[0.144216, 0.107853, 0.03868],
-			[-0.144216, -0.107853, 0.03868],
-			[0.144216, -0.107853, 0.03868]
-		]).cuda()
+		self.inverse_inertia = self.GetInverseIntertia()
 		
 	def Update(self):
 		position_delta = self.body_velocity * CONFIG.delta_time
@@ -54,21 +48,29 @@ class Rigidbody:
 		self.particle_positions = Quaternion.RotatePoints(self.alpha_positions, self.body_rotation)
 		self.particle_positions = self.particle_positions + self.body_origin
 		
+		self.inverse_inertia = self.GetInverseIntertia()
+		
 	def Accelerate(self, acceleration):
 		self.body_velocity += acceleration
 		
 	def AddForce(self, force, displacement):
-		angular_momentum_delta = torch.linalg.cross(displacement, force).view(-1, 1)
-		angular_velocity_delta = torch.matmul(self.inverse_inertia, angular_momentum_delta)
+		torque = torch.linalg.cross(displacement, force).view(-1, 1)
+		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)
 	
 		self.body_angular_velocity += angular_velocity_delta.T
+		#print(self.body_angular_velocity)
 		
 		acceleration = force / self.body_mass	
 		acceleration = acceleration.view(1, -1)
 		
-		self.body_velocity += acceleration
+		#self.body_velocity += acceleration
+	
+	def AddTorque(self, torque):
+		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)
 		
-	def InverseIntertia(self):
+		self.body_angular_velocity += angular_velocity_delta.T
+	
+	def GetInverseIntertia(self):
 		rotation_matrix = Quaternion.MatrixFromQuaternion(self.body_rotation)
 		
 		inverse_inertia = torch.linalg.solve(self.inertia_moment, rotation_matrix.T)
