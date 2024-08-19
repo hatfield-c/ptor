@@ -29,7 +29,7 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 		
 		desired_direction = torch.FloatTensor([lateral_signal, forward_signal]).cuda()
 
-		desired_altitude = 7
+		desired_altitude = 15
 
 		drop_package = False
 

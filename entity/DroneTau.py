@@ -32,4 +32,3 @@ class DroneTau(EntityInterface.EntityInterface):
 		self.rotor_actuator.Actuate(control_signals)
 			
 		self.desired_direction = plan["desired_direction"].view(1, -1) * 0.5
-		

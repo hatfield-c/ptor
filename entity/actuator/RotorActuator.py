@@ -11,7 +11,7 @@ class RotorActuator(ActuatorInterface.ActuatorInterface):
 		self.last_command = None
 		
 		self.max_throttle = 1
-		self.max_throttle_thrust = 1.03
+		self.max_throttle_thrust = 1.03 * torch.linalg.norm(CONFIG.gravity)
 		self.torque_empirical_ratio = 0.15
 		
 		self.motor_positions = torch.FloatTensor([
@@ -33,12 +33,7 @@ class RotorActuator(ActuatorInterface.ActuatorInterface):
 		br_thrust = torch.clip(br_thottle, 0, self.max_throttle) * self.max_throttle_thrust
 		bl_thrust = torch.clip(bl_thottle, 0, self.max_throttle) * self.max_throttle_thrust
 		
-		fr_torque = fr_thrust * self.torque_empirical_ratio
-		fl_torque = fl_thrust * self.torque_empirical_ratio
-		br_torque = br_thrust * self.torque_empirical_ratio
-		bl_torque = bl_thrust * self.torque_empirical_ratio
-		
-		torque = -fr_torque + fl_torque + br_torque - bl_torque
+		torque = (-fr_thrust + fl_thrust + br_thrust - bl_thrust) * self.torque_empirical_ratio
 		
 		self.ActuateMotor(self.motor_positions[[0]], fr_thrust)
 		self.ActuateMotor(self.motor_positions[[1]], fl_thrust)

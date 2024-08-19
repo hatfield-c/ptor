@@ -4,6 +4,7 @@ import torch
 import time
 
 import CONFIG
+import engine.Transform as Transform
 import engine.WorldSpace as WorldSpace
 import render.RenderCamera as RenderCamera
 import entity.DroneTau as DroneTau
@@ -16,8 +17,6 @@ class PtorEngine:
 		self.world_space = WorldSpace.WorldSpace()
 		
 		self.avg_fps = 1
-		
-		self.gravity = torch.FloatTensor([[0, 0, -9.8]]).cuda()
 		
 		self.time_step = 0
 	
@@ -38,7 +37,7 @@ class PtorEngine:
 	def PhysicsUpdate(self):
 		rigidbody = self.drone.rigidbody
 		
-		#rigidbody.Accelerate(self.gravity)
+		rigidbody.Accelerate(CONFIG.gravity)
 		rigidbody.Update()
 			
 	def ScenarioUpdate(self):

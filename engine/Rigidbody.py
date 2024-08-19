@@ -29,17 +29,17 @@ class Rigidbody:
 		
 		self.alpha_positions = self.alpha_positions - self.center_of_mass
 		
-		world_origin = torch.FloatTensor([[45, 20, 2]]).cuda() 
+		world_origin = torch.FloatTensor([[45, 10, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
-		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, math.pi / 6, 0]).cuda()
-		self.body_rotation = Quaternion.QuaternionFromEulerAngles([ 0 * -math.pi / 6, 0, 0]).cuda()
+		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, -math.pi / 6, 0]).cuda()
+		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
 		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
 		self.body_angular_velocity = torch.FloatTensor([[0, 0, 0]]).cuda() * 1
 		self.inverse_inertia = self.GetInverseIntertia()
 		
 	def Update(self):
-		#position_delta = self.body_velocity * CONFIG.delta_time
-		#self.body_origin = self.body_origin + position_delta
+		position_delta = self.body_velocity * CONFIG.delta_time
+		self.body_origin = self.body_origin + position_delta
 		
 		rotation_angles_delta = self.body_angular_velocity * CONFIG.delta_time
 		quaternion_delta = Quaternion.QuaternionFromEulerAngles(rotation_angles_delta[0]).cuda()
@@ -51,6 +51,7 @@ class Rigidbody:
 		self.inverse_inertia = self.GetInverseIntertia()
 		
 	def Accelerate(self, acceleration):
+		pass
 		self.body_velocity += acceleration * CONFIG.delta_time
 		
 	def AddForce(self, force, displacement):

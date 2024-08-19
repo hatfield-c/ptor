@@ -13,31 +13,31 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		self.xy_corner_2 = torch.FloatTensor([[-1, -1, 0]]).cuda()
 
 		self.speed_val = 1
-		self.move_angle = math.pi / 8
+		self.move_angle = math.pi / 6
 		self.move_depth = -math.sin(self.move_angle)
 
 		self.thrust_pid = Pid.Pid(
-			p_scale = 0.05,
+			p_scale = 0.1,
 			i_scale = 0,
-			d_scale = 0.5,
+			d_scale = 0,
 			#debug = True
 		)
 		self.pitch_pid = Pid.Pid(
-			p_scale = 0.01,
+			p_scale = 0.1,
 			i_scale = 0,
-			d_scale = 0.05,
+			d_scale = 1,
 			#debug = True
 		)
 		self.roll_pid = Pid.Pid(
-			p_scale = 0.001,
+			p_scale = 0.1,
 			i_scale = 0,
-			d_scale = 0.05,
+			d_scale = 2,
 			#debug = True
 		)
 		self.yaw_pid = Pid.Pid(
-			p_scale = 0.001,
+			p_scale = 0.4,
 			i_scale = 0,
-			d_scale = 0.05,
+			d_scale = 5,
 			#debug = True
 		)
 
@@ -81,52 +81,40 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 
 		pitch_error = local_front[0, 2] - self.move_depth
 		roll_error = dist_2_xy - dist_1_xy
-		yaw_error = local_corner_2[0, 2] - local_corner_1[0, 2]
+		yaw_error = local_corner_1[0, 2] - local_corner_2[0, 2]
 
-		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2]) * 0
+		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2])
 		pitch_rpm = self.pitch_pid.ControlStep(pitch_error)
-		roll_rpm = self.roll_pid.ControlStep(roll_error) * 0
-		yaw_rpm = self.yaw_pid.ControlStep(yaw_error) * 0
+		roll_rpm = self.roll_pid.ControlStep(roll_error)
+		yaw_rpm = self.yaw_pid.ControlStep(yaw_error)
 		
-		rigidbody = plan["rigidbody"]
-		#print(rigidbody.body_velocity)
-		#print(rigidbody.body_angular_velocity)
-		#print(self.roll_pid.memory["estimated_velocity"])
-		#print(self.yaw_pid.memory["estimated_velocity"])
-		#print("======")
-		#print(local_front)
-		#print(desired_direction)
-		#print("{:.6f}".format(pitch_error), "{:.6f}".format(pitch_rpm))
-		#print("{:.6f}".format(roll_error), "{:.6f}".format(roll_rpm))
-		#print("{:.6f}".format(yaw_error), "{:.6f}".format(yaw_rpm))
-		#print("=======")
+		#print(roll_error, roll_rpm)
+		#print(yaw_error, yaw_rpm)
+		#print("")
 
 		control_data = self.MotorMixer(thrust_rpm, yaw_rpm, pitch_rpm, roll_rpm)
 
-		#print(control_data["fr_rotor_force"])
-		#print(control_data["fl_rotor_force"])
-		#print(control_data["br_rotor_force"])
-		#print(control_data["bl_rotor_force"])
-		#print("_______________")
-		#input()
-
-		#control_data["desired_direction"] = desired_direction[[0, 1]]
-		#control_data["desired_altitude"] = desired_altitude
 		control_data["drop_package"] = plan["drop_package"]
-		#control_data["thrust_signal"] = thrust_rpm
-		#control_data["pitch_signal"] = pitch_rpm
-		#control_data["roll_signal"] = roll_rpm
-		#control_data["yaw_signal"] = yaw_rpm
-
+		
 		return control_data
 
 	def MotorMixer(self, thrust, yaw, pitch, roll):
 		motor_vals = {}
 
-		fr = thrust + yaw + pitch + roll
-		fl = thrust - yaw + pitch - roll
-		br = thrust - yaw - pitch + roll
-		bl = thrust + yaw - pitch - roll
+		thrust = max(thrust, 0)
+		thrust = min(thrust, 0.1)
+		
+
+		normalizer = torch.abs(thrust) + torch.abs(yaw) + torch.abs(pitch) + torch.abs(roll) 
+
+		fr = (thrust + yaw + pitch + roll) / normalizer
+		fl = (thrust - yaw + pitch - roll) / normalizer
+		br = (thrust - yaw - pitch + roll) / normalizer
+		bl = (thrust + yaw - pitch - roll) / normalizer
+		
+		#print("{:.2f}".format(fr), "{:.2f}".format(fl), "{:.2f}".format(br), "{:.2f}".format(bl))
+		#print("    {:.2f}".format(thrust), "{:.2f}".format(pitch), "{:.2f}".format(pitch), "{:.2f}".format(roll))
+		#input()
 
 		motor_vals["fr_throttle"] = fr
 		motor_vals["fl_throttle"] = fl

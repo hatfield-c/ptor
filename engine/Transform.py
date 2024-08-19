@@ -8,6 +8,8 @@ UP = torch.FloatTensor([[0, 0, 1]]).cuda()
 BACKWARD = torch.FloatTensor([[0, -1, 0]]).cuda()
 LEFT = torch.FloatTensor([[-1, 0, 0]]).cuda()
 DOWN = torch.FloatTensor([[0, 0, -1]]).cuda()
+ZEROS = torch.zeros((1, 3)).cuda()
+ONES = torch.ones((1, 3)).cuda()
 
 def GetUnit(vector):
 	magnitude = torch.linalg.norm(vector)
