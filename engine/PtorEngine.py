@@ -17,8 +17,9 @@ class PtorEngine:
 		self.world_space = WorldSpace.WorldSpace()
 		
 		self.avg_fps = 1
-		
 		self.time_step = 0
+		
+		self.wind = torch.FloatTensor([[-1, -1, 0]]).cuda()
 	
 	def InstantiateScenario(self):
 		pass
@@ -38,6 +39,7 @@ class PtorEngine:
 		rigidbody = self.drone.rigidbody
 		
 		rigidbody.Accelerate(CONFIG.gravity)
+		rigidbody.AirResistance(self.wind)
 		rigidbody.Update()
 			
 	def ScenarioUpdate(self):

@@ -13,31 +13,31 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		self.xy_corner_2 = torch.FloatTensor([[-1, -1, 0]]).cuda()
 
 		self.speed_val = 1
-		self.move_angle = math.pi / 6
+		self.move_angle = math.pi / 12
 		self.move_depth = -math.sin(self.move_angle)
 
 		self.thrust_pid = Pid.Pid(
-			p_scale = 0.1,
+			p_scale = 1,
 			i_scale = 0,
-			d_scale = 0,
+			d_scale = 2,
 			#debug = True
 		)
 		self.pitch_pid = Pid.Pid(
-			p_scale = 0.1,
+			p_scale = 0.5,
 			i_scale = 0,
 			d_scale = 1,
 			#debug = True
 		)
 		self.roll_pid = Pid.Pid(
-			p_scale = 0.1,
+			p_scale = 0.005,
 			i_scale = 0,
-			d_scale = 2,
+			d_scale = 0.005,
 			#debug = True
 		)
 		self.yaw_pid = Pid.Pid(
-			p_scale = 0.4,
+			p_scale = 1,
 			i_scale = 0,
-			d_scale = 5,
+			d_scale = 2,
 			#debug = True
 		)
 
@@ -78,7 +78,7 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		dist_2_xy = desired_xy - local_corner_2_xy
 		dist_1_xy = torch.linalg.norm(dist_1_xy)
 		dist_2_xy = torch.linalg.norm(dist_2_xy)
-
+		
 		pitch_error = local_front[0, 2] - self.move_depth
 		roll_error = dist_2_xy - dist_1_xy
 		yaw_error = local_corner_1[0, 2] - local_corner_2[0, 2]
@@ -91,29 +91,71 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		#print(roll_error, roll_rpm)
 		#print(yaw_error, yaw_rpm)
 		#print("")
-
-		control_data = self.MotorMixer(thrust_rpm, yaw_rpm, pitch_rpm, roll_rpm)
+		
+		control_data = self.MotorMixer(thrust_rpm, pitch_rpm, roll_rpm, yaw_rpm)
 
 		control_data["drop_package"] = plan["drop_package"]
 		
 		return control_data
 
-	def MotorMixer(self, thrust, yaw, pitch, roll):
+	def MotorMixer(self, thrust, pitch, roll, yaw):
 		motor_vals = {}
 
-		thrust = max(thrust, 0)
-		thrust = min(thrust, 0.1)
+		thrust = torch.clip(thrust, 0, 1)
+		pitch = torch.clip(pitch, -1, 1)
+		roll = torch.clip(roll, -1, 1)
+		yaw = torch.clip(yaw, -1, 1)
+		angle_strength = torch.abs(pitch) + torch.abs(roll) + torch.abs(yaw)
+		pitch_strength = torch.abs(pitch)
+		roll_strength = torch.abs(roll)
+		yaw_strength = torch.abs(yaw)
 		
+		thrust_share = max(0.5, 1 - angle_strength)
+		pitch_share = 0
+		roll_share = 0
+		yaw_share = 0
 
-		normalizer = torch.abs(thrust) + torch.abs(yaw) + torch.abs(pitch) + torch.abs(roll) 
+		if angle_strength > 0:
+			angle_share = 1 - thrust_share
 
-		fr = (thrust + yaw + pitch + roll) / normalizer
-		fl = (thrust - yaw + pitch - roll) / normalizer
-		br = (thrust - yaw - pitch + roll) / normalizer
-		bl = (thrust + yaw - pitch - roll) / normalizer
+			pitch_share = angle_share * (pitch_strength / angle_strength)
+			roll_share = angle_share * (roll_strength / angle_strength)
+			yaw_share = angle_share * (yaw_strength / angle_strength)
+			
+		thrust = min(thrust, thrust_share)
+		pitch = min(pitch_strength, pitch_share) * torch.sign(pitch)
+		roll = min(roll_strength, roll_share) * torch.sign(roll)
+		yaw = min(yaw_strength, yaw_share) * torch.sign(yaw)
 		
-		#print("{:.2f}".format(fr), "{:.2f}".format(fl), "{:.2f}".format(br), "{:.2f}".format(bl))
-		#print("    {:.2f}".format(thrust), "{:.2f}".format(pitch), "{:.2f}".format(pitch), "{:.2f}".format(roll))
+		fr = thrust + pitch + roll + yaw
+		fl = thrust + pitch - roll - yaw
+		br = thrust - pitch + roll - yaw
+		bl = thrust - pitch - roll + yaw
+		
+		min_throttle = min(0, fr)
+		min_throttle = min(min_throttle, fl)
+		min_throttle = min(min_throttle, br)
+		min_throttle = min(min_throttle, bl)
+		throttle_offset = abs(min_throttle)
+		
+		fr += throttle_offset
+		fl += throttle_offset
+		br += throttle_offset
+		bl += throttle_offset
+		
+		max_throttle = max(0, fr)
+		max_throttle = max(max_throttle, fl)
+		max_throttle = max(max_throttle, br)
+		max_throttle = max(max_throttle, bl)
+		
+		if max_throttle > 1:
+			fr = fr / max_throttle
+			fl = fl / max_throttle
+			br = br / max_throttle
+			bl = bl / max_throttle
+		
+		#print("{:.4f}".format(fr), "{:.4f}".format(fl), "{:.4f}".format(br), "{:.4f}".format(bl))
+		#print("    {:.4f}".format(thrust), "{:.4f}".format(pitch), "{:.4f}".format(roll), "{:.4f}".format(yaw))
 		#input()
 
 		motor_vals["fr_throttle"] = fr

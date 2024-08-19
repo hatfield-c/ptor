@@ -11,9 +11,9 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 
 	def __init__(self):
 		self.align_pid = Pid.Pid(
-			p_scale = 0.5,
+			p_scale = 0.05,
 			i_scale = 0,
-			d_scale = 1,
+			d_scale = 0.1,
 		)
 
 	def GetPlan(self, current_state):
@@ -29,7 +29,7 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 		
 		desired_direction = torch.FloatTensor([lateral_signal, forward_signal]).cuda()
 
-		desired_altitude = 15
+		desired_altitude = 7
 
 		drop_package = False
 
