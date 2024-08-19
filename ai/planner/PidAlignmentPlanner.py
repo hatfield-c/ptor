@@ -13,7 +13,7 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 		self.align_pid = Pid.Pid(
 			p_scale = 0.5,
 			i_scale = 0,
-			d_scale = 5,
+			d_scale = 1,
 		)
 
 	def GetPlan(self, current_state):

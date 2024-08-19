@@ -9,7 +9,6 @@ import ai.controller.modules.Pid as Pid
 
 class PidForwardController(ControllerInterface.ControllerInterface):
 	def __init__(self):
-
 		self.xy_corner_1 = torch.FloatTensor([[1, -1, 0]]).cuda()
 		self.xy_corner_2 = torch.FloatTensor([[-1, -1, 0]]).cuda()
 
@@ -84,10 +83,10 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		roll_error = dist_2_xy - dist_1_xy
 		yaw_error = local_corner_2[0, 2] - local_corner_1[0, 2]
 
-		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2])
+		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2]) * 0
 		pitch_rpm = self.pitch_pid.ControlStep(pitch_error)
-		roll_rpm = self.roll_pid.ControlStep(roll_error)
-		yaw_rpm = self.yaw_pid.ControlStep(yaw_error)
+		roll_rpm = self.roll_pid.ControlStep(roll_error) * 0
+		yaw_rpm = self.yaw_pid.ControlStep(yaw_error) * 0
 		
 		rigidbody = plan["rigidbody"]
 		#print(rigidbody.body_velocity)
@@ -129,18 +128,9 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		br = thrust - yaw - pitch + roll
 		bl = thrust + yaw - pitch - roll
 
-		#print("thrust:", thrust)
-		#print(fr)
-		#print(fl)
-		#print(br)
-		#print(bl)
-		#print("==============")
-
-		motor_vals["fr_rotor_force"] = fr
-		motor_vals["fl_rotor_force"] = fl
-		motor_vals["br_rotor_force"] = br
-		motor_vals["bl_rotor_force"] = bl
-
-		motor_vals["torque"] = yaw
+		motor_vals["fr_throttle"] = fr
+		motor_vals["fl_throttle"] = fl
+		motor_vals["br_throttle"] = br
+		motor_vals["bl_throttle"] = bl
 
 		return motor_vals

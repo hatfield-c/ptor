@@ -1,17 +1,18 @@
 import torch
 import math
 
+import CONFIG
 import entity.actuator.ActuatorInterface as ActuatorInterface
 import engine.Quaternion as Quaternion
 
 class RotorActuator(ActuatorInterface.ActuatorInterface):
-	def __init__(self, rigidbody, rotor_max = 0.5, torque_max = 0.5):
+	def __init__(self, rigidbody):
 		self.rigidbody = rigidbody
-		self.rotor_max = rotor_max
-		self.torque_max = torque_max
 		self.last_command = None
 		
-		self.flag = True
+		self.max_throttle = 1
+		self.max_throttle_thrust = 1.03
+		self.torque_empirical_ratio = 0.15
 		
 		self.motor_positions = torch.FloatTensor([
 			[0.144216, 0.107853, 0.03868],
@@ -22,35 +23,32 @@ class RotorActuator(ActuatorInterface.ActuatorInterface):
 
 	def Actuate(self, control_data):
 
-		fr_rotor = control_data["fr_rotor_force"]
-		fl_rotor = control_data["fl_rotor_force"]
-		br_rotor = control_data["br_rotor_force"]
-		bl_rotor = control_data["bl_rotor_force"]
-		torque = control_data["torque"]
-
-		fr_rotor = torch.clip(fr_rotor, 0, self.rotor_max)
-		fl_rotor = torch.clip(fl_rotor, 0, self.rotor_max)
-		br_rotor = torch.clip(br_rotor, 0, self.rotor_max)
-		bl_rotor = torch.clip(bl_rotor, 0, self.rotor_max)
-		torque = torch.clip(torque, -self.torque_max, self.torque_max)
+		fr_thottle = control_data["fr_throttle"]
+		fl_thottle = control_data["fl_throttle"]
+		br_thottle = control_data["br_throttle"]
+		bl_thottle = control_data["bl_throttle"]
 		
-		self.ActuateMotor(self.motor_positions[[0]], fr_rotor)
-		self.ActuateMotor(self.motor_positions[[1]], fl_rotor)
-		self.ActuateMotor(self.motor_positions[[2]], br_rotor)
-		self.ActuateMotor(self.motor_positions[[3]], bl_rotor)
+		fr_thrust = torch.clip(fr_thottle, 0, self.max_throttle) * self.max_throttle_thrust
+		fl_thrust = torch.clip(fl_thottle, 0, self.max_throttle) * self.max_throttle_thrust
+		br_thrust = torch.clip(br_thottle, 0, self.max_throttle) * self.max_throttle_thrust
+		bl_thrust = torch.clip(bl_thottle, 0, self.max_throttle) * self.max_throttle_thrust
+		
+		fr_torque = fr_thrust * self.torque_empirical_ratio
+		fl_torque = fl_thrust * self.torque_empirical_ratio
+		br_torque = br_thrust * self.torque_empirical_ratio
+		bl_torque = bl_thrust * self.torque_empirical_ratio
+		
+		torque = -fr_torque + fl_torque + br_torque - bl_torque
+		
+		self.ActuateMotor(self.motor_positions[[0]], fr_thrust)
+		self.ActuateMotor(self.motor_positions[[1]], fl_thrust)
+		self.ActuateMotor(self.motor_positions[[2]], br_thrust)
+		self.ActuateMotor(self.motor_positions[[3]], bl_thrust)
 
 		torque = torch.FloatTensor([[0, 0, torque]]).cuda()
 		torque = Quaternion.RotatePoints(torque, self.rigidbody.body_rotation)
 		self.rigidbody.AddTorque(torque.T)
 		
-		#pb.applyExternalTorque(
-		#	control_data["pb_id"],
-		#	-1,
-		#	torqueObj = [0, 0, torque],
-		#	flags = pb.LINK_FRAME,
-		#	physicsClientId = self.client_id
-		#)
-
 	def ActuateMotor(self, motor_position, thrust):
 		force = torch.FloatTensor([[0, 0, thrust]]).cuda()
 		

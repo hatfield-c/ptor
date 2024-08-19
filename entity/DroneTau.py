@@ -33,12 +33,3 @@ class DroneTau(EntityInterface.EntityInterface):
 			
 		self.desired_direction = plan["desired_direction"].view(1, -1) * 0.5
 		
-		#for i in range(4):
-		#	thrust = torch.FloatTensor([[0, 0, 0.28]]).cuda()
-				
-		#	motor_position = self.motor_positions[[i]]
-			
-		#	thrust = Quaternion.RotatePoints(thrust, self.rigidbody.body_rotation)
-		#	motor_position = Quaternion.RotatePoints(motor_position, self.rigidbody.body_rotation)
-			
-		#	self.rigidbody.AddForce(thrust, motor_position)

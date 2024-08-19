@@ -16,10 +16,8 @@ class PtorEngine:
 		self.world_space = WorldSpace.WorldSpace()
 		
 		self.avg_fps = 1
-		self.delta_time = CONFIG.delta_time
 		
 		self.gravity = torch.FloatTensor([[0, 0, -9.8]]).cuda()
-		self.gravity_delta = self.gravity * self.delta_time
 		
 		self.time_step = 0
 	
@@ -40,7 +38,7 @@ class PtorEngine:
 	def PhysicsUpdate(self):
 		rigidbody = self.drone.rigidbody
 		
-		rigidbody.Accelerate(self.gravity_delta)
+		#rigidbody.Accelerate(self.gravity)
 		rigidbody.Update()
 			
 	def ScenarioUpdate(self):
@@ -61,8 +59,8 @@ class PtorEngine:
 		
 		time_wait = 0
 		
-		if elapsed_time < self.delta_time:
-			time_diff = self.delta_time - elapsed_time
+		if elapsed_time < CONFIG.delta_time:
+			time_diff = CONFIG.delta_time - elapsed_time
 			time_wait = int(time_diff * 1000)
 			
 		if time_wait < 1:
