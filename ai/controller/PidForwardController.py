@@ -13,8 +13,11 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		self.xy_corner_2 = torch.FloatTensor([[-1, -1, 0]]).cuda()
 
 		self.speed_val = 1
-		self.move_angle = math.pi / 12
-		self.move_depth = -math.sin(self.move_angle)
+		self.move_angle = -math.pi / 12
+		self.move_depth = math.sin(self.move_angle)
+		self.move_xy_norm = math.cos((math.pi / 2) + self.move_angle)
+		self.move_z_target = math.sin((math.pi / 2) + self.move_angle)
+		self.move_z_target = torch.FloatTensor([[self.move_z_target]]).cuda()
 
 		self.thrust_pid = Pid.Pid(
 			p_scale = 1,
@@ -23,19 +26,19 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 			#debug = True
 		)
 		self.pitch_pid = Pid.Pid(
-			p_scale = 0.5,
+			p_scale = 1,
 			i_scale = 0,
-			d_scale = 1,
+			d_scale = 2,
 			#debug = True
 		)
 		self.roll_pid = Pid.Pid(
-			p_scale = 0.005,
+			p_scale = 1,
 			i_scale = 0,
-			d_scale = 0.005,
+			d_scale = 2,
 			#debug = True
 		)
 		self.yaw_pid = Pid.Pid(
-			p_scale = 1,
+			p_scale = 0.5,
 			i_scale = 0,
 			d_scale = 2,
 			#debug = True
@@ -59,34 +62,34 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		velocity = plan["velocity"]
 		current_quat = plan["current_quat"]
 
-		desired_xy = desired_direction[[0, 1]]
-		unitFactor = torch.linalg.norm(desired_xy)
-		if unitFactor == 0:
-			unitFactor = 1
-		desired_xy = desired_xy / unitFactor
+		inverse_quat = Quaternion.GetQuaternionInverse(current_quat)
 
-		local_front = Transform.GetForward(current_quat)
-		local_corner_1 = Quaternion.RotatePoints(self.xy_corner_1, current_quat)
-		local_corner_2 = Quaternion.RotatePoints(self.xy_corner_2, current_quat)
-
-		local_corner_1_xy = local_corner_1[[0], [0, 1]]
-		local_corner_2_xy = local_corner_2[[0], [0, 1]]
-		local_corner_1_xy = local_corner_1_xy / torch.linalg.norm(local_corner_1_xy)
-		local_corner_2_xy = local_corner_2_xy / torch.linalg.norm(local_corner_2_xy)
-
-		dist_1_xy = desired_xy - local_corner_1_xy
-		dist_2_xy = desired_xy - local_corner_2_xy
-		dist_1_xy = torch.linalg.norm(dist_1_xy)
-		dist_2_xy = torch.linalg.norm(dist_2_xy)
+		#desired_direction = torch.FloatTensor([[1, 0]]).cuda()
+		desired_direction = desired_direction.view(1, -1)
 		
-		pitch_error = local_front[0, 2] - self.move_depth
-		roll_error = dist_2_xy - dist_1_xy
-		yaw_error = local_corner_1[0, 2] - local_corner_2[0, 2]
-
+		desired_unit = Transform.GetUnit(desired_direction)
+		move_xy_dir = desired_unit * self.move_xy_norm				
+		desired_local = torch.cat((move_xy_dir, self.move_z_target), dim = 1)
+		desired_local = Quaternion.RotatePoints(desired_local, inverse_quat)
+		axis_strengths = desired_local[:, [0, 1]]
+		
+		body_forward = Transform.GetForward(current_quat)
+		forward_xy = body_forward[[0], [0, 1]]
+		forward_xy = Transform.GetUnit(forward_xy)
+		
+		desired_shifted  = desired_unit[0, [1, 0]]
+		desired_shifted[0] = -desired_shifted[0]
+		desired_shifted = desired_shifted.view(1, -1)
+		desired_alignment = torch.sum(forward_xy * desired_shifted)
+		
+		pitch_signal = axis_strengths[0, 1]
+		roll_signal = axis_strengths[0, 0]
+		yaw_signal = -desired_alignment
+		
 		thrust_rpm = self.thrust_pid.ControlStep(current_altitude, desired_altitude, velocity[2])
-		pitch_rpm = self.pitch_pid.ControlStep(pitch_error)
-		roll_rpm = self.roll_pid.ControlStep(roll_error)
-		yaw_rpm = self.yaw_pid.ControlStep(yaw_error)
+		pitch_rpm = self.pitch_pid.ControlStep(pitch_signal)
+		roll_rpm = self.roll_pid.ControlStep(roll_signal)
+		yaw_rpm = self.yaw_pid.ControlStep(yaw_signal)
 		
 		#print(roll_error, roll_rpm)
 		#print(yaw_error, yaw_rpm)
@@ -110,7 +113,7 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		roll_strength = torch.abs(roll)
 		yaw_strength = torch.abs(yaw)
 		
-		thrust_share = max(0.5, 1 - angle_strength)
+		thrust_share = max(0.7, 1 - angle_strength)
 		pitch_share = 0
 		roll_share = 0
 		yaw_share = 0

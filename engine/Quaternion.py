@@ -26,6 +26,12 @@ def MultiplyQuaternions(q0, q1, is_normalized = True):
 	
 	return result
 
+def GetQuaternionInverse(quaternion):
+	inverse = GetQuaternionConjugate(quaternion)
+	inverse = inverse / torch.linalg.norm(inverse, dim = 1, keepdim = True)
+	
+	return inverse
+
 def GetQuaternionConjugate(quaternion):
 	conjugate = torch.stack([quaternion[:, 0], -quaternion[:, 1], -quaternion[:, 2], -quaternion[:, 3]], dim = 1)
 	

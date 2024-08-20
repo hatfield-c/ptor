@@ -33,7 +33,9 @@ class Rigidbody:
 		world_origin = torch.FloatTensor([[45, 10, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
 		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, -math.pi / 6, 0]).cuda()
-		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
+		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
+		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 12, 0, 0]).cuda()
+		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 2, 0, 0]).cuda()
 		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
 		self.body_angular_velocity = torch.FloatTensor([[0, 0, 0]]).cuda() * 1
 		self.inverse_inertia = self.GetInverseIntertia()

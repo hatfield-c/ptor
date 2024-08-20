@@ -19,7 +19,7 @@ class PtorEngine:
 		self.avg_fps = 1
 		self.time_step = 0
 		
-		self.wind = torch.FloatTensor([[-1, -1, 0]]).cuda()
+		self.wind = torch.FloatTensor([[-1, -1, 0]]).cuda() * 0
 	
 	def InstantiateScenario(self):
 		pass
