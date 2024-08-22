@@ -36,7 +36,7 @@ def Main():
 		engine.Run()
 
 	if action == actions["convert_static_env_mesh"]:
-		import MeshConverter
+		import MeshConverter as MeshConverter
 		
 		mesh_converter = MeshConverter.MeshConverter(CONFIG.static_env_mesh_path)
 		mesh_converter.SaveAsVoxelParticles(
