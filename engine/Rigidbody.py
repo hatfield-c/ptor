@@ -32,10 +32,8 @@ class Rigidbody:
 		
 		world_origin = torch.FloatTensor([[45, 10, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
-		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, -math.pi / 6, 0]).cuda()
-		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 6, 0, 0]).cuda()
-		self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 12, 0, 0]).cuda()
-		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 2, 0, 0]).cuda()
+		self.body_rotation = Quaternion.QuaternionFromEulerAngles([0, 0, 0]).cuda()
+		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 12, 0, 0]).cuda()
 		self.body_velocity = torch.FloatTensor([[0, 0, 0]]).cuda()
 		self.body_angular_velocity = torch.FloatTensor([[0, 0, 0]]).cuda() * 1
 		self.inverse_inertia = self.GetInverseIntertia()
@@ -67,10 +65,6 @@ class Rigidbody:
 		self.body_velocity += (acceleration * CONFIG.delta_time)
 	
 	def AddTorque(self, torque):
-		#angular_velocity_delta = torch.matmul(self.inertia_moment, self.body_angular_velocity.T)
-		#angular_velocity_delta = torch.linalg.cross(self.body_angular_velocity.T, angular_velocity_delta)
-		#angular_velocity_delta = torque.T - angular_velocity_delta
-		#angular_velocity_delta = torch.matmul(self.inverse_inertia, angular_velocity_delta)
 		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)
 		
 		self.body_angular_velocity += (angular_velocity_delta.T * CONFIG.delta_time)

@@ -28,13 +28,13 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		self.pitch_pid = Pid.Pid(
 			p_scale = 1,
 			i_scale = 0,
-			d_scale = 2,
+			d_scale = 1.2,
 			#debug = True
 		)
 		self.roll_pid = Pid.Pid(
 			p_scale = 1,
 			i_scale = 0,
-			d_scale = 2,
+			d_scale = 1.2,
 			#debug = True
 		)
 		self.yaw_pid = Pid.Pid(
@@ -90,10 +90,6 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 		pitch_rpm = self.pitch_pid.ControlStep(pitch_signal)
 		roll_rpm = self.roll_pid.ControlStep(roll_signal)
 		yaw_rpm = self.yaw_pid.ControlStep(yaw_signal)
-		
-		#print(roll_error, roll_rpm)
-		#print(yaw_error, yaw_rpm)
-		#print("")
 		
 		control_data = self.MotorMixer(thrust_rpm, pitch_rpm, roll_rpm, yaw_rpm)
 
@@ -157,13 +153,9 @@ class PidForwardController(ControllerInterface.ControllerInterface):
 			br = br / max_throttle
 			bl = bl / max_throttle
 		
-		#print("{:.4f}".format(fr), "{:.4f}".format(fl), "{:.4f}".format(br), "{:.4f}".format(bl))
-		#print("    {:.4f}".format(thrust), "{:.4f}".format(pitch), "{:.4f}".format(roll), "{:.4f}".format(yaw))
-		#input()
-
-		motor_vals["fr_throttle"] = fr
-		motor_vals["fl_throttle"] = fl
-		motor_vals["br_throttle"] = br
-		motor_vals["bl_throttle"] = bl
+		motor_vals["fr_throttle"] = fr# * 0 + 0.6
+		motor_vals["fl_throttle"] = fl# * 0 + 0.6
+		motor_vals["br_throttle"] = br# * 0 + 0.6
+		motor_vals["bl_throttle"] = bl# * 0 + 0.6
 
 		return motor_vals

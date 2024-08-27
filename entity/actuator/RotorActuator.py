@@ -10,8 +10,11 @@ class RotorActuator(ActuatorInterface.ActuatorInterface):
 		self.rigidbody = rigidbody
 		self.last_command = None
 		
+		max_motor_thrust = 2.71
+		experimental_scale = 0.28 / 0.6
+		
 		self.max_throttle = 1
-		self.max_throttle_thrust = 1.03 * torch.linalg.norm(CONFIG.gravity)
+		self.max_throttle_thrust = (max_motor_thrust * experimental_scale) * torch.linalg.norm(CONFIG.gravity)
 		self.torque_empirical_ratio = 0.15
 		
 		self.motor_positions = torch.FloatTensor([

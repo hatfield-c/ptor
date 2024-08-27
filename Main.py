@@ -80,4 +80,6 @@ def Main():
 	print("\n[" + action + "]: Operation complete")
 	print("    Total runtime: " + runtime + " sec\n")
 
-Main()
+
+if __name__ == '__main__':
+	Main()
