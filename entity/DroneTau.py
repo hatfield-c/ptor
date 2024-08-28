@@ -27,6 +27,10 @@ class DroneTau(EntityInterface.EntityInterface):
 		}
 		
 		plan = self.planner.GetPlan(current_state)
+		
+		if plan is None:
+			return
+		
 		plan["rigidbody"] = self.rigidbody
 		control_signals = self.controller.GetControlSignal(plan)
 		self.rotor_actuator.Actuate(control_signals)
