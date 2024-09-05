@@ -8,7 +8,7 @@ import engine.Quaternion as Quaternion
 class Rigidbody:
 	def __init__(self):
 		
-		physics_vals = self.LoadPhysicsValues()
+		physics_vals = torch.load(CONFIG.rigid_drone_physics_path)
 		
 		particle_data = torch.load(CONFIG.visual_drone_particles_path)
 		particle_positions = particle_data[:, :3]
@@ -96,50 +96,6 @@ class Rigidbody:
 		inverse_inertia = torch.matmul(rotation_matrix, inverse_inertia)
 		
 		return inverse_inertia
-		
-	def LoadPhysicsValues(self):
-		print("Loading physics values...")
-		particle_data = torch.load(CONFIG.rigid_drone_particles_path)
-		
-		positions = particle_data[:, 0:3]
-		mass = particle_data[:, [5]]
-		
-		center_of_mass = positions * mass
-		center_of_mass = torch.sum(center_of_mass, dim = 0, keepdim = True) / torch.sum(mass)
-		
-		positions = positions - center_of_mass
-		
-		inertia_moment = torch.zeros((3, 3))
-		for i in range(positions.shape[0]):
-			particle_inertia = torch.FloatTensor([
-				[
-					 mass[i] * ((positions[i, 1] ** 2) + (positions[i, 2] ** 2)),
-					 mass[i] * (-positions[i, 0] * positions[i, 1]),
-					 mass[i] * (-positions[i, 0] * positions[i, 2])
-				],
-				[
-					 mass[i] * (-positions[i, 1] * positions[i, 0]),
-					 mass[i] * ((positions[i, 0] ** 2) + (positions[i, 2] ** 2)),
-					 mass[i] * (-positions[i, 1] * positions[i, 2])
-				],
-				[
-					 mass[i] * (-positions[i, 2] * positions[i, 0]),
-					 mass[i] * (-positions[i, 2] * positions[i, 1]),
-					 mass[i] * ((positions[i, 0] ** 2) + (positions[i, 1] ** 2))
-				]
-			])
-			
-			inertia_moment += particle_inertia
-			
-		physics_values = {
-			"center_of_mass": center_of_mass,
-			"inertia_moment": inertia_moment,
-			"total_mass": torch.sum(mass)
-		}
-			
-		print("    Loaded!")
-		
-		return physics_values
 		
 	def GetParticleData(self):
 

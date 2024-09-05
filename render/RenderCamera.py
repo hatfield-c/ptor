@@ -10,8 +10,8 @@ import engine.Quaternion as Quaternion
 
 class RenderCamera:
 	def __init__(self):
-		self.render_width = 256
-		self.render_height = 256
+		self.render_width = 240
+		self.render_height = 240
 		self.resolution = (self.render_height, self.render_width)
 		self.render_fov = torch.FloatTensor([math.pi / 2, math.pi / 2])
 		

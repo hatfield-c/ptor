@@ -24,7 +24,7 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 			#"takeoff",
 			#"point up",
 			"linear_path",
-			"landing"
+			#"landing"
 		]
 		
 		self.task_index = 0
@@ -97,7 +97,7 @@ class PidAlignmentPlanner(PlannerInterface.PlannerInterface):
 		
 		speed = torch.linalg.norm(velocity)
 		
-		if speed 
+		#if speed 
 
 	def LinearPath(self, current_state):
 		current_position = current_state["position"]

@@ -16,6 +16,8 @@ class WorldSpace:
 		
 	def LoadWorldVoxels(self):
 		particle_data = torch.load(CONFIG.static_env_particles_path).cuda()
+		baked_data = torch.load(CONFIG.static_env_baked_path)
+
 		particle_positions = particle_data[:, :3]
 		material_vals = particle_data[:, 3]
 		

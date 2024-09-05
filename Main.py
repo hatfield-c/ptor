@@ -60,6 +60,18 @@ def Main():
 		mesh_converter = MeshConverter.MeshConverter(CONFIG.visual_drone_mesh_path)
 		mesh_converter.SaveAsObjectParticles(save_path = CONFIG.visual_drone_particles_path)
 		
+	if action == actions["bake_env_data"]:
+		import engine.ParticleBaker as ParticleBaker
+		
+		baker = ParticleBaker.ParticleBaker(CONFIG.rigid_drone_particles_path)
+		baker.BakeEnvironmentData(CONFIG.static_env_baked_path)
+		
+	if action == actions["bake_rigidbody_data"]:
+		import engine.ParticleBaker as ParticleBaker
+		
+		baker = ParticleBaker.ParticleBaker(CONFIG.rigid_drone_particles_path)
+		baker.BakeRigidbodyData(CONFIG.rigid_drone_physics_path)
+		
 	if action == "help":
 		print("	[PTOR] Particle PyTorch Simulation")
 		print("	PTOR is built on top of the PyTorch tensor library and simulates a the physics of a particle-based rigidbody.")
