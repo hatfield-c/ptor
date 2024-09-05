@@ -7,6 +7,7 @@ possible_actions = {
 	"convert_visual_drone_mesh": "convert_visual_drone_mesh",
 	"bake_env_data": "bake_env_data",
 	"bake_rigidbody_data": "bake_rigidbody_data",
+	"train_position_estimator": "train_position_estimator",
 	"simulate": "simulate"
 }
 

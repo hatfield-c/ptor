@@ -13,8 +13,8 @@ import engine.Quaternion as Quaternion
 class PtorEngine:
 	def __init__(self):
 		self.camera = RenderCamera.RenderCamera()
-		self.drone = DroneTau.DroneTau()
 		self.world_space = WorldSpace.WorldSpace()
+		self.drone = DroneTau.DroneTau()
 		
 		self.avg_fps = 1
 		self.time_step = 0
@@ -48,10 +48,11 @@ class PtorEngine:
 	def RenderUpdate(self, start_time):
 		self.camera.Follow(self.drone.rigidbody)
 		
-		render_frame = self.camera.CaptureImage(self.world_space, self.drone)
+		#render_frame = self.camera.CaptureImage(self.world_space, self.drone)
+		render_frame = self.drone.camera_sensor.ReadSensorImage(self.world_space, self.drone.GetCameraPosition(), self.drone.rigidbody.body_rotation)
 		render_frame = render_frame.cpu().numpy().astype(np.uint8)
 		
-		render_frame = cv2.resize(render_frame, (1024, 1024), interpolation = cv2.INTER_NEAREST)
+		render_frame = cv2.resize(render_frame, (240 * 1, 240 * 1), interpolation = cv2.INTER_NEAREST)
 		self.DrawFps(render_frame, self.avg_fps)
 		
 		cv2.imshow("PtorEngine v0.0.1 Render", render_frame)

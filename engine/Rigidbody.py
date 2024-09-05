@@ -31,6 +31,7 @@ class Rigidbody:
 		self.alpha_positions = self.alpha_positions - self.center_of_mass
 		
 		world_origin = torch.FloatTensor([[45, 10, 2]]).cuda() 
+		#world_origin = torch.FloatTensor([[62, 53, 2]]).cuda() 
 		self.body_origin = self.center_of_mass + world_origin
 		self.body_rotation = Quaternion.QuaternionFromEulerAngles([0, 0, 0]).cuda()
 		#self.body_rotation = Quaternion.QuaternionFromEulerAngles([-math.pi / 12, 0, 0]).cuda()
@@ -52,10 +53,11 @@ class Rigidbody:
 		self.inverse_inertia = self.GetInverseIntertia()
 		
 	def Accelerate(self, acceleration):
-		pass
+		#return
 		self.body_velocity += acceleration * CONFIG.delta_time
 		
 	def AddForce(self, force, displacement):
+		#return
 		torque = torch.linalg.cross(displacement, force).view(-1, 1)
 		self.AddTorque(torque)
 		
@@ -65,11 +67,13 @@ class Rigidbody:
 		self.body_velocity += (acceleration * CONFIG.delta_time)
 	
 	def AddTorque(self, torque):
+		#return
 		angular_velocity_delta = torch.matmul(self.inverse_inertia, torque)
 		
 		self.body_angular_velocity += (angular_velocity_delta.T * CONFIG.delta_time)
 	
 	def AirResistance(self, wind_vector):
+		#return
 		viscous_torque = 6.17e-5 * self.body_angular_velocity
 		self.AddTorque(-viscous_torque.T)
 		

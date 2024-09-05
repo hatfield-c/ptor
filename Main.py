@@ -71,7 +71,13 @@ def Main():
 		
 		baker = ParticleBaker.ParticleBaker(CONFIG.rigid_drone_particles_path)
 		baker.BakeRigidbodyData(CONFIG.rigid_drone_physics_path)
+	
+	if action == actions["train_position_estimator"]:
+		import learning.PositionTrainer as PositionTrainer
 		
+		trainer = PositionTrainer.PositionTrainer()
+		trainer.Learn()
+	
 	if action == "help":
 		print("	[PTOR] Particle PyTorch Simulation")
 		print("	PTOR is built on top of the PyTorch tensor library and simulates a the physics of a particle-based rigidbody.")
